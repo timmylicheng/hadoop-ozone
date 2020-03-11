@@ -31,7 +31,12 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.*;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static org.apache.hadoop.hdds.scm.ScmConfigKeys.OZONE_DATANODE_PIPELINE_LIMIT;
@@ -41,18 +46,21 @@ import static org.apache.hadoop.hdds.scm.ScmConfigKeys.OZONE_DATANODE_PIPELINE_L
  */
 public class TestPipelinePlacementPolicy {
   private MockNodeManager nodeManager;
+  private PipelineStateManager stateManager;
   private OzoneConfiguration conf;
   private PipelinePlacementPolicy placementPolicy;
   private static final int PIPELINE_PLACEMENT_MAX_NODES_COUNT = 10;
+  private static final int PIPELINE_LOAD_LIMIT = 5;
 
   @Before
   public void init() throws Exception {
     nodeManager = new MockNodeManager(true,
         PIPELINE_PLACEMENT_MAX_NODES_COUNT);
     conf = new OzoneConfiguration();
-    conf.setInt(OZONE_DATANODE_PIPELINE_LIMIT, 5);
+    conf.setInt(OZONE_DATANODE_PIPELINE_LIMIT, PIPELINE_LOAD_LIMIT);
+    stateManager = new PipelineStateManager();
     placementPolicy = new PipelinePlacementPolicy(
-        nodeManager, new PipelineStateManager(), conf);
+        nodeManager, stateManager, conf);
   }
 
   @Test
@@ -71,6 +79,45 @@ public class TestPipelinePlacementPolicy {
     Assert.assertFalse(excludedNodes.contains(nextNode));
     // nextNode should not be the same as anchor.
     Assert.assertTrue(anchor.getUuid() != nextNode.getUuid());
+  }
+
+  @Test
+  public void testPickLowestLoadAnchor() throws IOException{
+    List<DatanodeDetails> healthyNodes = nodeManager
+        .getNodes(HddsProtos.NodeState.HEALTHY);
+
+    int maxPipelineCount = PIPELINE_LOAD_LIMIT * healthyNodes.size()
+        / HddsProtos.ReplicationFactor.THREE.getNumber();
+    for (int i = 0; i < maxPipelineCount; i++) {
+      try {
+        List<DatanodeDetails> nodes = placementPolicy.chooseDatanodes(null,
+            null, HddsProtos.ReplicationFactor.THREE.getNumber(), 0);
+
+        Pipeline pipeline = Pipeline.newBuilder()
+            .setId(PipelineID.randomId())
+            .setState(Pipeline.PipelineState.ALLOCATED)
+            .setType(HddsProtos.ReplicationType.RATIS)
+            .setFactor(HddsProtos.ReplicationFactor.THREE)
+            .setNodes(nodes)
+            .build();
+        nodeManager.addPipeline(pipeline);
+        stateManager.addPipeline(pipeline);
+      } catch (SCMException e) {
+        break;
+      }
+    }
+
+    // Should max out pipeline usage
+    Assert.assertEquals(maxPipelineCount,
+        stateManager.getPipelines(HddsProtos.ReplicationType.RATIS).size());
+
+    // Every node should be equally using up the limit.
+    int averageLoadOnNode = maxPipelineCount *
+        HddsProtos.ReplicationFactor.THREE.getNumber() / healthyNodes.size();
+    for (DatanodeDetails node : healthyNodes) {
+      Assert.assertTrue(nodeManager.getPipelinesCount(node)
+          >= averageLoadOnNode);
+    }
   }
 
   @Test

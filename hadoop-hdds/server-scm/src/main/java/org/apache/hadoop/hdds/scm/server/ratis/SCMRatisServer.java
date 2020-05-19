@@ -24,8 +24,11 @@ import org.apache.hadoop.hdds.conf.Config;
 import org.apache.hadoop.hdds.conf.ConfigGroup;
 import org.apache.hadoop.hdds.conf.ConfigType;
 import org.apache.hadoop.hdds.conf.ConfigurationSource;
+import org.apache.hadoop.hdds.protocol.proto.SCMRatisProtocolProtos;
 import org.apache.hadoop.hdds.scm.ScmConfigKeys;
 import org.apache.hadoop.hdds.scm.ha.SCMNodeDetails;
+import org.apache.hadoop.hdds.scm.ha.SCMRatisRequest;
+import org.apache.hadoop.hdds.scm.ha.SCMRatisResponse;
 import org.apache.hadoop.hdds.scm.server.StorageContainerManager;
 import org.apache.hadoop.hdds.server.ServerUtils;
 import org.apache.ratis.RaftConfigKeys;
@@ -37,6 +40,8 @@ import org.apache.ratis.proto.RaftProtos.RoleInfoProto;
 import org.apache.ratis.protocol.ClientId;
 import org.apache.ratis.protocol.GroupInfoReply;
 import org.apache.ratis.protocol.GroupInfoRequest;
+import org.apache.ratis.protocol.RaftClientReply;
+import org.apache.ratis.protocol.RaftClientRequest;
 import org.apache.ratis.protocol.RaftGroup;
 import org.apache.ratis.protocol.RaftGroupId;
 import org.apache.ratis.protocol.RaftPeer;
@@ -62,6 +67,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -297,6 +303,22 @@ public final class SCMRatisServer {
       throw new RuntimeException(e);
     }
   }
+
+  public void registerStateMachineHandler(final SCMRatisProtocolProtos
+      .RequestType handlerType, final Object handler) {
+    scmStateMachine.registerHandler(handlerType, handler);
+  }
+
+  public SCMRatisResponse submitRequest(SCMRatisRequest request)
+      throws IOException, ExecutionException, InterruptedException {
+    final RaftClientRequest raftClientRequest = new RaftClientRequest(
+        clientId, server.getId(), raftGroupId, nextCallId(), request.encode(),
+        RaftClientRequest.writeRequestType(), null);
+    final RaftClientReply raftClientReply =
+        server.submitClientRequestAsync(raftClientRequest).get();
+    return SCMRatisResponse.decode(raftClientReply);
+  }
+
 
   private boolean checkCachedPeerRoleIsLeader() {
     this.roleCheckLock.readLock().lock();

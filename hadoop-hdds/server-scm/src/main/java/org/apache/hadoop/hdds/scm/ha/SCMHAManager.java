@@ -17,10 +17,11 @@
 
 package org.apache.hadoop.hdds.scm.ha;
 
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hdds.protocol.proto.SCMRatisProtocolProtos.RequestType;
+import org.apache.hadoop.hdds.conf.OzoneConfiguration;
+import org.apache.hadoop.hdds.scm.server.ratis.SCMRatisServer;
 
 import java.io.IOException;
+import java.util.Collections;
 
 public class SCMHAManager {
 
@@ -28,8 +29,14 @@ public class SCMHAManager {
 
   private final SCMRatisServer ratisServer;
 
-  public SCMHAManager(Configuration conf) throws IOException {
-    this.ratisServer = new SCMRatisServer(conf);
+  public SCMHAManager(OzoneConfiguration conf) throws IOException {
+    SCMNodeDetails scmNodeDetails = SCMNodeDetails
+        .initStandAlone(conf);
+    this.ratisServer = SCMRatisServer.newSCMRatisServer(
+        conf.getObject(SCMRatisServer.SCMRatisServerConfiguration.class),
+        //TODO should depend on SCM?
+        null, scmNodeDetails, Collections.EMPTY_LIST,
+        SCMRatisServer.getSCMRatisDirectory(conf));
   }
 
   public static boolean isLeader() {

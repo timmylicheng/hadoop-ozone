@@ -23,6 +23,7 @@ import java.lang.reflect.Method;
 
 import org.apache.hadoop.hdds.protocol.proto.SCMRatisProtocolProtos.RequestType;
 import org.apache.hadoop.hdds.scm.metadata.Replicate;
+import org.apache.hadoop.hdds.scm.server.ratis.SCMRatisServer;
 import org.apache.hadoop.util.Time;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

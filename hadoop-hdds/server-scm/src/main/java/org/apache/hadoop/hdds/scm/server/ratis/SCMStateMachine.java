@@ -20,6 +20,10 @@ package org.apache.hadoop.hdds.scm.server.ratis;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import com.google.protobuf.InvalidProtocolBufferException;
+import org.apache.hadoop.hdds.protocol.proto.SCMRatisProtocolProtos;
+import org.apache.hadoop.hdds.scm.ha.SCMRatisRequest;
+import org.apache.hadoop.hdds.scm.ha.SCMRatisResponse;
 import org.apache.hadoop.hdds.scm.server.StorageContainerManager;
 import org.apache.hadoop.util.concurrent.HadoopExecutors;
 import org.apache.ratis.proto.RaftProtos;
@@ -38,7 +42,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
@@ -60,6 +68,8 @@ public class SCMStateMachine extends BaseStateMachine {
   private final SCMRatisSnapshotInfo snapshotInfo;
   private final ExecutorService executorService;
   private final ExecutorService installSnapshotExecutor;
+  private final HashMap<SCMRatisProtocolProtos.RequestType, Object> handlers;
+
 
   // Map which contains index and term for the ratis transactions which are
   // stateMachine entries which are recived through applyTransaction.
@@ -80,6 +90,7 @@ public class SCMStateMachine extends BaseStateMachine {
         .setNameFormat("SCM StateMachine ApplyTransaction Thread - %d").build();
     this.executorService = HadoopExecutors.newSingleThreadExecutor(build);
     this.installSnapshotExecutor = HadoopExecutors.newSingleThreadExecutor();
+    this.handlers = new HashMap<>();
   }
 
   /**
@@ -93,6 +104,10 @@ public class SCMStateMachine extends BaseStateMachine {
       this.raftGroupId = id;
       storage.init(raftStorage);
     });
+  }
+
+  public void registerHandler(SCMRatisProtocolProtos.RequestType type, Object handler) {
+    handlers.put(type, handler);
   }
 
   /**
@@ -114,10 +129,44 @@ public class SCMStateMachine extends BaseStateMachine {
    */
   @Override
   public CompletableFuture<Message> applyTransaction(TransactionContext trx) {
-    CompletableFuture<Message> ratisFuture =
+    final CompletableFuture<Message> applyTransactionFuture =
         new CompletableFuture<>();
-    //TODO execute SCMRequest and process SCMResponse
-    return ratisFuture;
+    try {
+      final SCMRatisRequest request = SCMRatisRequest.decode(
+          trx.getClientRequest().getMessage());
+      applyTransactionFuture.complete(process(request));
+    } catch (Exception ex) {
+      applyTransactionFuture.completeExceptionally(ex);
+    }
+    return applyTransactionFuture;
+  }
+
+  private Message process(final SCMRatisRequest request)
+      throws Exception {
+    try {
+      final Object handler = handlers.get(request.getType());
+
+      if (handler == null) {
+        // No handler registered for the request type.
+        throw new IOException("No handler found for request type " +
+            request.getType());
+      }
+
+      final List<Class<?>> argumentTypes = new ArrayList<>();
+      for(Object args : request.getArguments()) {
+        argumentTypes.add(args.getClass());
+      }
+      final Object result = handler.getClass().getMethod(
+          request.getOperation(), argumentTypes.toArray(new Class<?>[0]))
+          .invoke(handler, request.getArguments());
+
+      return SCMRatisResponse.encode(result);
+    } catch (NoSuchMethodException | SecurityException ex) {
+      throw new InvalidProtocolBufferException(ex.getMessage());
+    } catch (InvocationTargetException e) {
+      final Exception targetEx = (Exception) e.getTargetException();
+      throw targetEx != null ? targetEx : e;
+    }
   }
 
   /**

@@ -201,8 +201,8 @@ public class PipelineStateManager implements StateManager {
   }
 
   @Override
-  public void updatePipelineState(HddsProtos.PipelineID pipelineIDProto,
-                                  HddsProtos.PipelineState newState)
+  public HddsProtos.Pipeline updatePipelineState(
+      HddsProtos.PipelineID pipelineIDProto, HddsProtos.PipelineState newState)
       throws IOException {
     throw new IOException("Not supported.");
   }

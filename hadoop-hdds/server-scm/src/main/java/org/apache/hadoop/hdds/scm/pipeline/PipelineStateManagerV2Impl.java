@@ -167,12 +167,12 @@ public class PipelineStateManagerV2Impl implements StateManager {
   }
 
   @Override
-  public HddsProtos.Pipeline updatePipelineState(
+  public void updatePipelineState(
       HddsProtos.PipelineID pipelineIDProto, HddsProtos.PipelineState newState)
       throws IOException {
-    return pipelineStateMap.updatePipelineState(
+    pipelineStateMap.updatePipelineState(
         PipelineID.getFromProtobuf(pipelineIDProto),
-        Pipeline.PipelineState.fromProtobuf(newState)).getProtobufMessage();
+        Pipeline.PipelineState.fromProtobuf(newState));
   }
 
   @Override

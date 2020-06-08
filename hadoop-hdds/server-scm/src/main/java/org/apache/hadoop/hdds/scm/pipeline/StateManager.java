@@ -58,7 +58,7 @@ public interface StateManager {
    * @throws IOException
    */
   @Replicate
-  HddsProtos.Pipeline updatePipelineState(HddsProtos.PipelineID pipelineIDProto,
+  void updatePipelineState(HddsProtos.PipelineID pipelineIDProto,
                            HddsProtos.PipelineState newState)
       throws IOException;
 

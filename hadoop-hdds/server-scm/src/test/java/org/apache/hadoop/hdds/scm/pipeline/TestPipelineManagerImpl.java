@@ -56,7 +56,6 @@ import static org.apache.hadoop.hdds.scm.ScmConfigKeys.OZONE_SCM_PIPELINE_ALLOCA
 import static org.apache.hadoop.hdds.scm.pipeline.Pipeline.PipelineState.ALLOCATED;
 import static org.apache.hadoop.test.MetricsAsserts.getLongCounter;
 import static org.apache.hadoop.test.MetricsAsserts.getMetrics;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 /**
@@ -103,7 +102,6 @@ public class TestPipelineManagerImpl {
 
   @Test
   public void testCreatePipeline() throws Exception {
-    List<Pipeline> pipelines = new ArrayList<>();
     PipelineManagerV2Impl pipelineManager = createPipelineManager();
     Assert.assertTrue(pipelineManager.getPipelines().isEmpty());
     pipelineManager.allowPipelineCreation();
@@ -111,13 +109,11 @@ public class TestPipelineManagerImpl {
         HddsProtos.ReplicationType.RATIS, HddsProtos.ReplicationFactor.THREE);
     Assert.assertEquals(1, pipelineManager.getPipelines().size());
     Assert.assertTrue(pipelineManager.containsPipeline(pipeline1.getId()));
-    pipelines.add(pipeline1);
 
     Pipeline pipeline2 = pipelineManager.createPipeline(
         HddsProtos.ReplicationType.RATIS, HddsProtos.ReplicationFactor.ONE);
     Assert.assertEquals(2, pipelineManager.getPipelines().size());
     Assert.assertTrue(pipelineManager.containsPipeline(pipeline2.getId()));
-    pipelines.add(pipeline2);
     pipelineManager.close();
 
     PipelineManagerV2Impl pipelineManager2 = createPipelineManager();
@@ -129,7 +125,6 @@ public class TestPipelineManagerImpl {
         HddsProtos.ReplicationType.RATIS, HddsProtos.ReplicationFactor.THREE);
     Assert.assertEquals(3, pipelineManager.getPipelines().size());
     Assert.assertTrue(pipelineManager.containsPipeline(pipeline3.getId()));
-    pipelines.add(pipeline3);
 
     pipelineManager2.close();
   }
@@ -142,7 +137,7 @@ public class TestPipelineManagerImpl {
         HddsProtos.ReplicationType.RATIS, HddsProtos.ReplicationFactor.THREE);
     Assert.assertEquals(1, pipelineManager.getPipelines().size());
     Assert.assertTrue(pipelineManager.containsPipeline(pipeline.getId()));
-    Assert.assertTrue(pipeline.getPipelineState() == ALLOCATED);
+    Assert.assertEquals(ALLOCATED, pipeline.getPipelineState());
     PipelineID pipelineID = pipeline.getId();
 
     pipelineManager.openPipeline(pipelineID);
@@ -178,7 +173,7 @@ public class TestPipelineManagerImpl {
         HddsProtos.ReplicationType.RATIS, HddsProtos.ReplicationFactor.THREE);
     Assert.assertEquals(1, pipelineManager.getPipelines().size());
     Assert.assertTrue(pipelineManager.containsPipeline(pipeline.getId()));
-    Assert.assertTrue(pipeline.getPipelineState() == ALLOCATED);
+    Assert.assertEquals(ALLOCATED, pipeline.getPipelineState());
 
     // Open the pipeline
     pipelineManager.openPipeline(pipeline.getId());
@@ -204,8 +199,9 @@ public class TestPipelineManagerImpl {
     try {
       pipelineManager.getPipeline(pipeline.getId());
       fail("Pipeline should not have been retrieved");
-    } catch (IOException e) {
-      Assert.assertTrue(e.getMessage().contains("not found"));
+    } catch (PipelineNotFoundException e) {
+      // There should be no pipeline in pipelineManager.
+      Assert.assertEquals(0, pipelineManager.getPipelines().size());
     }
 
     pipelineManager.close();
@@ -253,8 +249,8 @@ public class TestPipelineManagerImpl {
     try {
       pipelineManager.getPipeline(pipeline.getId());
       fail("Pipeline should not have been retrieved");
-    } catch (IOException e) {
-      Assert.assertTrue(e.getMessage().contains("not found"));
+    } catch (PipelineNotFoundException e) {
+      // should reach here
     }
 
     // clean up
@@ -439,19 +435,19 @@ public class TestPipelineManagerImpl {
         TimeUnit.MILLISECONDS);
 
     PipelineManagerV2Impl pipelineManager = createPipelineManager();
-    assertEquals(true, pipelineManager.getSafeModeStatus());
-    assertEquals(false, pipelineManager.isPipelineCreationAllowed());
+    Assert.assertTrue(pipelineManager.getSafeModeStatus());
+    Assert.assertFalse(pipelineManager.isPipelineCreationAllowed());
     // First pass pre-check as true, but safemode still on
     pipelineManager.onMessage(
         new SCMSafeModeManager.SafeModeStatus(true, true), null);
-    assertEquals(true, pipelineManager.getSafeModeStatus());
-    assertEquals(true, pipelineManager.isPipelineCreationAllowed());
+    Assert.assertTrue(pipelineManager.getSafeModeStatus());
+    Assert.assertTrue(pipelineManager.isPipelineCreationAllowed());
 
     // Then also turn safemode off
     pipelineManager.onMessage(
         new SCMSafeModeManager.SafeModeStatus(false, true), null);
-    assertEquals(false, pipelineManager.getSafeModeStatus());
-    assertEquals(true, pipelineManager.isPipelineCreationAllowed());
+    Assert.assertFalse(pipelineManager.getSafeModeStatus());
+    Assert.assertTrue(pipelineManager.isPipelineCreationAllowed());
     pipelineManager.close();
   }
 

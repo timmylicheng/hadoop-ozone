@@ -209,8 +209,8 @@ public final class TestHelper {
       throws TimeoutException, InterruptedException, IOException {
     for (Pipeline pipeline1 : pipelineList) {
       // issue pipeline destroy command
-      cluster.getStorageContainerManager().getPipelineManager()
-          .finalizeAndDestroyPipeline(pipeline1, false);
+      cluster.getStorageContainerManager()
+          .getPipelineManager().closePipeline(pipeline1, false);
     }
 
     // wait for the pipeline to get destroyed in the datanodes

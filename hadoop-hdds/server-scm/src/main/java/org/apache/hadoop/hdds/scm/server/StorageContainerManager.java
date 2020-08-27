@@ -431,7 +431,7 @@ public final class StorageContainerManager extends ServiceRuntimeInfoImpl
       scmNodeManager = configurator.getScmNodeManager();
     } else {
       scmNodeManager = new SCMNodeManager(
-          conf, scmStorageConfig, eventQueue, clusterMap);
+          conf, scmStorageConfig, eventQueue, clusterMap, scmHAManager);
     }
 
     placementMetrics = SCMContainerPlacementMetrics.create();
@@ -1032,7 +1032,7 @@ public final class StorageContainerManager extends ServiceRuntimeInfoImpl
    * @return - if the current scm is the leader.
    */
   public boolean checkLeader() {
-    return scmHAManager.isLeader();
+    return scmHAManager.isLeader().isPresent();
   }
 
   /**

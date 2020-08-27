@@ -198,7 +198,8 @@ public class StorageInfo {
    * @return new clusterID
    */
   public static String newClusterID() {
-    return "CID-" + UUID.randomUUID().toString();
+    //return "CID-" + UUID.randomUUID().toString();
+    return "CID-1df51ed9-19f1-4283-8f61-5d90a84c196c";
   }
 
 }

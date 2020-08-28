@@ -127,6 +127,8 @@ public class HeartbeatEndpointTask
    */
   @Override
   public EndpointStateMachine.EndPointStates call() throws Exception {
+    LOG.debug("endpoint is {}", rpcEndpoint);
+
     rpcEndpoint.lock();
     SCMHeartbeatRequestProto.Builder requestBuilder = null;
     try {

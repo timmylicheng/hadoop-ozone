@@ -180,8 +180,7 @@ public class TestStorageContainerManager {
         } else {
           // If passes permission check, it should fail with
           // container not exist exception.
-          Assert.assertTrue(e.getMessage()
-              .contains("container doesn't exist"));
+          Assert.assertTrue(e instanceof ContainerNotFoundException);
         }
       }
 
@@ -595,12 +594,12 @@ public class TestStorageContainerManager {
       helper.createKeys(10, 4096);
       GenericTestUtils.waitFor(() -> {
         return cluster.getStorageContainerManager().getContainerManager().
-            getContainers() != null;
+            listContainers() != null;
       }, 1000, 10000);
 
       StorageContainerManager scm = cluster.getStorageContainerManager();
       List<ContainerInfo> containers = cluster.getStorageContainerManager()
-          .getContainerManager().getContainers();
+          .getContainerManager().listContainers();
       Assert.assertNotNull(containers);
       ContainerInfo selectedContainer = containers.iterator().next();
 

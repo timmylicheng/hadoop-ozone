@@ -19,7 +19,6 @@ package org.apache.hadoop.hdds.scm.block;
 import com.google.common.collect.ArrayListMultimap;
 import org.apache.hadoop.hdds.scm.container.ContainerID;
 import org.apache.hadoop.hdds.scm.container.ContainerInfo;
-import org.apache.hadoop.hdds.scm.container.ContainerManager;
 import org.apache.hadoop.hdds.protocol.proto
     .StorageContainerDatanodeProtocolProtos.DeletedBlocksTransaction;
 
@@ -30,6 +29,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.apache.hadoop.hdds.scm.container.ContainerManagerV2;
 import org.apache.hadoop.hdds.scm.container.ContainerReplica;
 
 /**
@@ -42,12 +42,12 @@ public class DatanodeDeletedBlockTransactions {
   private int maximumAllowedTXNum;
   // Current counter of inserted TX.
   private int currentTXNum;
-  private ContainerManager containerManager;
+  private ContainerManagerV2 containerManager;
   // A list of TXs mapped to a certain datanode ID.
   private final ArrayListMultimap<UUID, DeletedBlocksTransaction>
       transactions;
 
-  DatanodeDeletedBlockTransactions(ContainerManager containerManager,
+  DatanodeDeletedBlockTransactions(ContainerManagerV2 containerManager,
       int maximumAllowedTXNum, int nodeNum) {
     this.transactions = ArrayListMultimap.create();
     this.containerManager = containerManager;

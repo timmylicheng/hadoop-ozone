@@ -16,7 +16,9 @@
  */
 package org.apache.hadoop.hdds.scm.container;
 
+import java.io.Closeable;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -35,7 +37,7 @@ import org.apache.hadoop.ozone.common.statemachine.InvalidStateTransitionExcepti
  * mapping. This is used by SCM when allocating new locations and when
  * looking up a key.
  */
-public interface ContainerManagerV2 extends AutoCloseable {
+public interface ContainerManagerV2 extends Closeable {
   // TODO: Rename this to ContainerManager
 
 
@@ -46,6 +48,10 @@ public interface ContainerManagerV2 extends AutoCloseable {
   ContainerInfo getContainer(ContainerID containerID)
       throws ContainerNotFoundException;
 
+
+  default List<ContainerInfo> listContainers() {
+    return listContainers(ContainerID.valueOf(0), Integer.MAX_VALUE);
+  }
   /**
    * Returns containers under certain conditions.
    * Search container IDs from start ID(exclusive),
@@ -131,6 +137,11 @@ public interface ContainerManagerV2 extends AutoCloseable {
   void updateDeleteTransactionId(Map<ContainerID, Long> deleteTransactionMap)
       throws IOException;
 
+  default ContainerInfo getMatchingContainer(long size, String owner,
+                                     Pipeline pipeline) {
+    return getMatchingContainer(size, owner, pipeline, Collections.emptySet());
+  }
+
   /**
    * Returns ContainerInfo which matches the requirements.
    * @param size - the amount of space required in the container
@@ -141,7 +152,7 @@ public interface ContainerManagerV2 extends AutoCloseable {
    */
   ContainerInfo getMatchingContainer(long size, String owner,
                                      Pipeline pipeline,
-                                     List<ContainerID> excludedContainerIDS);
+                                     Set<ContainerID> excludedContainerIDS);
 
   /**
    * Once after report processor handler completes, call this to notify

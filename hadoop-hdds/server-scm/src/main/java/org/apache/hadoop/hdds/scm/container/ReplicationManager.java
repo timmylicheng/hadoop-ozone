@@ -87,7 +87,7 @@ public class ReplicationManager
   /**
    * Reference to the ContainerManager.
    */
-  private final ContainerManager containerManager;
+  private final ContainerManagerV2 containerManager;
 
   /**
    * PlacementPolicy which is used to identify where a container
@@ -148,7 +148,7 @@ public class ReplicationManager
    * @param eventPublisher EventPublisher
    */
   public ReplicationManager(final ReplicationManagerConfiguration conf,
-                            final ContainerManager containerManager,
+                            final ContainerManagerV2 containerManager,
                             final PlacementPolicy containerPlacement,
                             final EventPublisher eventPublisher,
                             final LockManager<ContainerID> lockManager,
@@ -234,13 +234,13 @@ public class ReplicationManager
     try {
       while (running) {
         final long start = Time.monotonicNow();
-        final Set<ContainerID> containerIds =
-            containerManager.getContainerIDs();
-        containerIds.forEach(this::processContainer);
+        final List<ContainerInfo> containers =
+            containerManager.listContainers();
+        containers.forEach(this::processContainer);
 
         LOG.info("Replication Monitor Thread took {} milliseconds for" +
                 " processing {} containers.", Time.monotonicNow() - start,
-            containerIds.size());
+            containers.size());
 
         wait(conf.getInterval());
       }
@@ -254,12 +254,12 @@ public class ReplicationManager
   /**
    * Process the given container.
    *
-   * @param id ContainerID
+   * @param container ContainerInfo
    */
-  private void processContainer(ContainerID id) {
+  private void processContainer(ContainerInfo container) {
+    final ContainerID id = container.containerID();
     lockManager.lock(id);
     try {
-      final ContainerInfo container = containerManager.getContainer(id);
       final Set<ContainerReplica> replicas = containerManager
           .getContainerReplicas(container.containerID());
       final LifeCycleState state = container.getState();

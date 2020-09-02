@@ -1307,6 +1307,7 @@ public final class OzoneManager extends ServiceRuntimeInfoImpl
         omSnapshotProvider.stop();
       }
       omState = State.STOPPED;
+      scmClient.close();
     } catch (Exception e) {
       LOG.error("OzoneManager stop failed.", e);
     }

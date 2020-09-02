@@ -20,10 +20,13 @@ package org.apache.hadoop.ozone.om;
 import org.apache.hadoop.hdds.scm.protocol.ScmBlockLocationProtocol;
 import org.apache.hadoop.hdds.scm.protocol.StorageContainerLocationProtocol;
 
+import java.io.Closeable;
+import java.io.IOException;
+
 /**
  * Wrapper class for Scm protocol clients.
  */
-public class ScmClient {
+public class ScmClient implements Closeable {
 
   private final ScmBlockLocationProtocol blockClient;
   private final StorageContainerLocationProtocol containerClient;
@@ -40,5 +43,11 @@ public class ScmClient {
 
   public StorageContainerLocationProtocol getContainerClient() {
     return this.containerClient;
+  }
+
+  @Override
+  public void close() throws IOException {
+    blockClient.close();
+    containerClient.close();
   }
 }

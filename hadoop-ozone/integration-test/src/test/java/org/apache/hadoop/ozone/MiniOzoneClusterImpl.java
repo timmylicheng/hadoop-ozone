@@ -59,6 +59,7 @@ import org.apache.hadoop.hdds.scm.TestUtils;
 import org.apache.hadoop.hdds.scm.pipeline.Pipeline;
 import org.apache.hadoop.hdds.scm.protocolPB.StorageContainerLocationProtocolClientSideTranslatorPB;
 import org.apache.hadoop.hdds.scm.protocolPB.StorageContainerLocationProtocolPB;
+import org.apache.hadoop.hdds.scm.proxy.SCMContainerLocationFailoverProxyProvider;
 import org.apache.hadoop.hdds.scm.safemode.HealthyPipelineSafeModeRule;
 import org.apache.hadoop.hdds.scm.server.OzoneStorageContainerManager;
 import org.apache.hadoop.hdds.scm.server.SCMStorageConfig;
@@ -283,18 +284,17 @@ public class MiniOzoneClusterImpl implements MiniOzoneCluster {
    */
   @Override
   public StorageContainerLocationProtocolClientSideTranslatorPB
-      getStorageContainerLocationClient() throws IOException {
-    long version = RPC.getProtocolVersion(
-        StorageContainerLocationProtocolPB.class);
+      getStorageContainerLocationClient() {
     InetSocketAddress address = scm.getClientRpcAddress();
     LOG.info(
         "Creating StorageContainerLocationProtocol RPC client with address {}",
         address);
+
+    SCMContainerLocationFailoverProxyProvider proxyProvider =
+        new SCMContainerLocationFailoverProxyProvider(conf);
+
     return new StorageContainerLocationProtocolClientSideTranslatorPB(
-        RPC.getProxy(StorageContainerLocationProtocolPB.class, version,
-            address, UserGroupInformation.getCurrentUser(), conf,
-            NetUtils.getDefaultSocketFactory(conf),
-            Client.getRpcTimeout(conf)));
+        proxyProvider);
   }
 
   @Override

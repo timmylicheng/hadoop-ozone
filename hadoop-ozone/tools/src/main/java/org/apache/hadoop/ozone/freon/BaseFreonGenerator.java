@@ -35,6 +35,7 @@ import org.apache.hadoop.hdds.scm.pipeline.Pipeline;
 import org.apache.hadoop.hdds.scm.protocol.StorageContainerLocationProtocol;
 import org.apache.hadoop.hdds.scm.protocolPB.StorageContainerLocationProtocolClientSideTranslatorPB;
 import org.apache.hadoop.hdds.scm.protocolPB.StorageContainerLocationProtocolPB;
+import org.apache.hadoop.hdds.scm.proxy.SCMContainerLocationFailoverProxyProvider;
 import org.apache.hadoop.hdds.tracing.TracingUtil;
 import org.apache.hadoop.ipc.Client;
 import org.apache.hadoop.ipc.ProtobufRpcEngine;
@@ -315,24 +316,13 @@ public class BaseFreonGenerator {
   }
 
   public StorageContainerLocationProtocol createStorageContainerLocationClient(
-      OzoneConfiguration ozoneConf)
-      throws IOException {
-
-    long version = RPC.getProtocolVersion(
-        StorageContainerLocationProtocolPB.class);
-    InetSocketAddress scmAddress =
-        getScmAddressForClients(ozoneConf);
-
-    RPC.setProtocolEngine(ozoneConf, StorageContainerLocationProtocolPB.class,
-        ProtobufRpcEngine.class);
+      OzoneConfiguration ozoneConf) {
+    SCMContainerLocationFailoverProxyProvider proxyProvider =
+        new SCMContainerLocationFailoverProxyProvider(ozoneConf);
     StorageContainerLocationProtocol client =
         TracingUtil.createProxy(
             new StorageContainerLocationProtocolClientSideTranslatorPB(
-                RPC.getProxy(StorageContainerLocationProtocolPB.class, version,
-                    scmAddress, UserGroupInformation.getCurrentUser(),
-                    ozoneConf,
-                    NetUtils.getDefaultSocketFactory(ozoneConf),
-                    Client.getRpcTimeout(ozoneConf))),
+                proxyProvider),
             StorageContainerLocationProtocol.class, ozoneConf);
     return client;
   }

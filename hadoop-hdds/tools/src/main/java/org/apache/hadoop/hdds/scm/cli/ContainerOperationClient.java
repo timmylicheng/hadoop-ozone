@@ -42,6 +42,7 @@ import org.apache.hadoop.hdds.scm.pipeline.Pipeline;
 import org.apache.hadoop.hdds.scm.protocol.StorageContainerLocationProtocol;
 import org.apache.hadoop.hdds.scm.protocolPB.StorageContainerLocationProtocolClientSideTranslatorPB;
 import org.apache.hadoop.hdds.scm.protocolPB.StorageContainerLocationProtocolPB;
+import org.apache.hadoop.hdds.scm.proxy.SCMContainerLocationFailoverProxyProvider;
 import org.apache.hadoop.hdds.scm.storage.ContainerProtocolCalls;
 import org.apache.hadoop.hdds.security.x509.SecurityConfig;
 import org.apache.hadoop.hdds.tracing.TracingUtil;
@@ -116,25 +117,17 @@ public class ContainerOperationClient implements ScmClient {
   }
 
   public static StorageContainerLocationProtocol newContainerRpcClient(
-      ConfigurationSource configSource) throws IOException {
+      ConfigurationSource configSource) {
+    //TODO there may be issues with hadoop legacy config
+//    Configuration conf =
+//        LegacyHadoopConfigurationSource.asHadoopConfiguration(configSource);
 
-    Class<StorageContainerLocationProtocolPB> protocol =
-        StorageContainerLocationProtocolPB.class;
-    Configuration conf =
-        LegacyHadoopConfigurationSource.asHadoopConfiguration(configSource);
-    RPC.setProtocolEngine(conf, protocol, ProtobufRpcEngine.class);
-    long version = RPC.getProtocolVersion(protocol);
-    InetSocketAddress scmAddress = getScmAddressForClients(configSource);
-    UserGroupInformation user = UserGroupInformation.getCurrentUser();
-    SocketFactory socketFactory = NetUtils.getDefaultSocketFactory(conf);
-    int rpcTimeOut = Client.getRpcTimeout(conf);
-
-    StorageContainerLocationProtocolPB rpcProxy =
-        RPC.getProxy(protocol, version, scmAddress, user, conf,
-            socketFactory, rpcTimeOut);
+    SCMContainerLocationFailoverProxyProvider proxyProvider =
+        new SCMContainerLocationFailoverProxyProvider(configSource);
 
     StorageContainerLocationProtocolClientSideTranslatorPB client =
-        new StorageContainerLocationProtocolClientSideTranslatorPB(rpcProxy);
+        new StorageContainerLocationProtocolClientSideTranslatorPB(
+            proxyProvider);
     return TracingUtil.createProxy(
         client, StorageContainerLocationProtocol.class, configSource);
   }

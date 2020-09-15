@@ -103,14 +103,6 @@ public final class ScmBlockLocationProtocolServerSideTranslatorPB
     }
   }
 
-  private String getSuggestedLeader() throws ServiceException {
-    if (!(impl instanceof SCMBlockProtocolServer)) {
-      throw new ServiceException("Should be SCMBlockProtocolServer");
-    } else {
-      return ((SCMBlockProtocolServer) impl).getScm().getSuggestedLeader();
-    }
-  }
-
   @Override
   public SCMBlockLocationResponse send(RpcController controller,
       SCMBlockLocationRequest request) throws ServiceException {
@@ -120,7 +112,8 @@ public final class ScmBlockLocationProtocolServerSideTranslatorPB
           request.getTraceID());
       response.setSuccess(false);
       response.setStatus(Status.SCM_NOT_LEADER);
-      response.setLeaderSCMNodeId(getSuggestedLeader());
+      response.setLeaderSCMNodeId(null);
+      return response.build();
     }
     return dispatcher.processRequest(
         request,

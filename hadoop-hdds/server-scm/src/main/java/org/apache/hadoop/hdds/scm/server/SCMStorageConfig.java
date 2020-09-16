@@ -72,7 +72,7 @@ public class SCMStorageConfig extends Storage {
       scmId = UUID.randomUUID().toString();
     }
     Properties scmProperties = new Properties();
-    scmProperties.setProperty(SCM_ID, "3a11fedb-cce5-46ac-bb0d-cfdf17df9a19");
+    scmProperties.setProperty(SCM_ID, scmId);
     return scmProperties;
   }
 

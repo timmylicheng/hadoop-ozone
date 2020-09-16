@@ -38,16 +38,11 @@ import org.apache.ratis.protocol.RaftGroupId;
 import org.apache.ratis.protocol.RaftPeer;
 import org.apache.ratis.protocol.RaftPeerId;
 import org.apache.ratis.server.RaftServer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * TODO.
  */
 public class SCMRatisServerImpl implements SCMRatisServer {
-
-  private static final Logger LOG =
-	      LoggerFactory.getLogger(SCMRatisServerImpl.class);
 
   private final InetSocketAddress address;
   private final RaftServer server;
@@ -65,25 +60,12 @@ public class SCMRatisServerImpl implements SCMRatisServer {
                      final ConfigurationSource conf)
       throws IOException {
     final String scmServiceId = "SCM-HA-Service";
-
-    // scmNodeId is scm1 scm2 scm3
-    final String scmNodeId = conf.get("scm.node.id");
-
+    final String scmNodeId = "localhost";
     this.raftPeerId = RaftPeerId.getRaftPeerId(scmNodeId);
     this.address = haConf.getRatisBindAddress();
-
+    final RaftPeer localRaftPeer = new RaftPeer(raftPeerId, address);
     final List<RaftPeer> raftPeers = new ArrayList<>();
-
-    // scm1 is 10.73.150.104:9865
-    // scm2 is 9.134.51.215:9865
-    // scm3 is 9.134.51.232:9865
-    raftPeers.add(new RaftPeer(RaftPeerId.getRaftPeerId("scm1"), conf.get("scm1")));
-    raftPeers.add(new RaftPeer(RaftPeerId.getRaftPeerId("scm2"), conf.get("scm2")));
-    raftPeers.add(new RaftPeer(RaftPeerId.getRaftPeerId("scm3"), conf.get("scm3")));
-
-    LOG.info("scm.node.id is {}, scm1 is {}, scm2 is {}, scm3 is {}",
-      scmNodeId, conf.get("scm1"), conf.get("scm2"), conf.get("scm3"));
-
+    raftPeers.add(localRaftPeer);
     final RaftProperties serverProperties = RatisUtil
         .newRaftProperties(haConf, conf);
     this.raftGroupId = RaftGroupId.valueOf(

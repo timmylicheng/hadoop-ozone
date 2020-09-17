@@ -102,8 +102,8 @@ public class SCMContainerLocationFailoverProxyProvider implements
     Collection<InetSocketAddress> resultList = new ArrayList<>();
     if (!scmAddressList.isEmpty()) {
       final int port = getPortNumberFromConfigKeys(conf,
-          ScmConfigKeys.OZONE_SCM_BLOCK_CLIENT_ADDRESS_KEY)
-          .orElse(ScmConfigKeys.OZONE_SCM_BLOCK_CLIENT_PORT_DEFAULT);
+          ScmConfigKeys.OZONE_SCM_CLIENT_ADDRESS_KEY)
+          .orElse(ScmConfigKeys.OZONE_SCM_CLIENT_PORT_DEFAULT);
       for (String scmAddress : scmAddressList) {
         LOG.info("SCM Address for proxy is {}", scmAddress);
 

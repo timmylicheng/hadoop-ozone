@@ -26,7 +26,8 @@ import org.apache.hadoop.hdds.conf.ConfigurationSource;
 import org.apache.hadoop.hdds.protocol.DatanodeDetails;
 import org.apache.hadoop.hdds.protocol.proto.HddsProtos.NodeState;
 import org.apache.hadoop.hdds.protocol.proto.StorageContainerDatanodeProtocolProtos.DeletedBlocksTransaction;
-import org.apache.hadoop.hdds.scm.container.ContainerManager;
+import org.apache.hadoop.hdds.scm.container.ContainerID;
+import org.apache.hadoop.hdds.scm.container.ContainerManagerV2;
 import org.apache.hadoop.hdds.scm.events.SCMEvents;
 import org.apache.hadoop.hdds.scm.node.NodeManager;
 import org.apache.hadoop.hdds.server.events.EventPublisher;
@@ -60,7 +61,7 @@ public class SCMBlockDeletingService extends BackgroundService {
   // ThreadPoolSize=2, 1 for scheduler and the other for the scanner.
   private final static int BLOCK_DELETING_SERVICE_CORE_POOL_SIZE = 2;
   private final DeletedBlockLog deletedBlockLog;
-  private final ContainerManager containerManager;
+  private final ContainerManagerV2 containerManager;
   private final NodeManager nodeManager;
   private final EventPublisher eventPublisher;
 
@@ -78,7 +79,7 @@ public class SCMBlockDeletingService extends BackgroundService {
   private int blockDeleteLimitSize;
 
   public SCMBlockDeletingService(DeletedBlockLog deletedBlockLog,
-      ContainerManager containerManager, NodeManager nodeManager,
+      ContainerManagerV2 containerManager, NodeManager nodeManager,
       EventPublisher eventPublisher, long interval, long serviceTimeout,
       ConfigurationSource conf) {
     super("SCMBlockDeletingService", interval, TimeUnit.MILLISECONDS,
@@ -135,7 +136,7 @@ public class SCMBlockDeletingService extends BackgroundService {
       LOG.debug("Running DeletedBlockTransactionScanner");
       DatanodeDeletedBlockTransactions transactions = null;
       List<DatanodeDetails> datanodes = nodeManager.getNodes(NodeState.HEALTHY);
-      Map<Long, Long> transactionMap = null;
+      Map<ContainerID, Long> transactionMap = null;
       if (datanodes != null) {
         transactions = new DatanodeDeletedBlockTransactions(containerManager,
             blockDeleteLimitSize, datanodes.size());

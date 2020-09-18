@@ -35,7 +35,7 @@ import org.apache.hadoop.hdds.protocol.proto.HddsProtos.ScmOps;
 import org.apache.hadoop.hdds.scm.ScmConfigKeys;
 import org.apache.hadoop.hdds.scm.ScmUtils;
 import org.apache.hadoop.hdds.scm.container.ContainerInfo;
-import org.apache.hadoop.hdds.scm.container.ContainerManager;
+import org.apache.hadoop.hdds.scm.container.ContainerManagerV2;
 import org.apache.hadoop.hdds.scm.container.common.helpers.AllocatedBlock;
 import org.apache.hadoop.hdds.scm.container.common.helpers.ExcludeList;
 import org.apache.hadoop.hdds.scm.exceptions.SCMException;
@@ -70,7 +70,7 @@ public class BlockManagerImpl implements BlockManager, BlockmanagerMXBean {
   // by itself and does not rely on the Block service offered by SCM.
 
   private final PipelineManager pipelineManager;
-  private final ContainerManager containerManager;
+  private final ContainerManagerV2 containerManager;
 
   private final long containerSize;
 

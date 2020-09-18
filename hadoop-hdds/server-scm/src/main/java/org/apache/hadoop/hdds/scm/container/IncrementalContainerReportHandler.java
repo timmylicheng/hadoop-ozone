@@ -29,6 +29,7 @@ import org.apache.hadoop.hdds.scm.server.SCMDatanodeHeartbeatDispatcher
     .IncrementalContainerReportFromDatanode;
 import org.apache.hadoop.hdds.server.events.EventHandler;
 import org.apache.hadoop.hdds.server.events.EventPublisher;
+import org.apache.hadoop.ozone.common.statemachine.InvalidStateTransitionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,7 +47,7 @@ public class IncrementalContainerReportHandler extends
 
   public IncrementalContainerReportHandler(
       final NodeManager nodeManager,
-      final ContainerManager containerManager)  {
+      final ContainerManagerV2 containerManager)  {
     super(containerManager, LOG);
     this.nodeManager = nodeManager;
   }
@@ -85,7 +86,7 @@ public class IncrementalContainerReportHandler extends
         success = false;
         LOG.error("Received ICR from unknown datanode {}",
             report.getDatanodeDetails(), ex);
-      } catch (IOException e) {
+      } catch (IOException | InvalidStateTransitionException e) {
         success = false;
         LOG.error("Exception while processing ICR for container {}",
             replicaProto.getContainerID(), e);

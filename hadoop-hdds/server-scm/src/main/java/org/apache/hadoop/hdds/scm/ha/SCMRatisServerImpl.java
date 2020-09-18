@@ -18,17 +18,22 @@
 package org.apache.hadoop.hdds.scm.ha;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 
+import org.apache.hadoop.hdds.HddsUtils;
 import org.apache.hadoop.hdds.conf.ConfigurationSource;
 import org.apache.hadoop.hdds.protocol.proto.SCMRatisProtocol.RequestType;
+import org.apache.hadoop.hdds.scm.ScmConfigKeys;
 import org.apache.ratis.conf.RaftProperties;
 import org.apache.ratis.protocol.ClientId;
 import org.apache.ratis.protocol.RaftClientReply;
@@ -45,9 +50,8 @@ import org.slf4j.LoggerFactory;
  * TODO.
  */
 public class SCMRatisServerImpl implements SCMRatisServer {
-
   private static final Logger LOG =
-	      LoggerFactory.getLogger(SCMRatisServerImpl.class);
+      LoggerFactory.getLogger(SCMRatisServerImpl.class);
 
   private final InetSocketAddress address;
   private final RaftServer server;
@@ -64,31 +68,55 @@ public class SCMRatisServerImpl implements SCMRatisServer {
   SCMRatisServerImpl(final SCMHAConfiguration haConf,
                      final ConfigurationSource conf)
       throws IOException {
-    final String scmServiceId = "SCM-HA-Service";
+    // If the SCM group starts from OZONE_SCM_NAMES, its raft peers
+    // should locate on different node, and use the same port to
+    // communicate with each other.
+    List<String> scmHosts =
+        Arrays.stream(conf.getTrimmedStrings(ScmConfigKeys.OZONE_SCM_NAMES))
+            .map(scmName -> HddsUtils.getHostName(scmName).get())
+            .collect(Collectors.toList());
 
-    // scmNodeId is scm1 scm2 scm3
-    final String scmNodeId = conf.get("scm.node.id");
-
-    this.raftPeerId = RaftPeerId.getRaftPeerId(scmNodeId);
     this.address = haConf.getRatisBindAddress();
+    InetAddress localHost = InetAddress.getLocalHost();
 
+    int selfIndex = -1;
+    RaftPeerId selfPeerId = null;
     final List<RaftPeer> raftPeers = new ArrayList<>();
 
-    // scm1 is 10.73.150.104:9865
-    // scm2 is 9.134.51.215:9865
-    // scm3 is 9.134.51.232:9865
-    raftPeers.add(new RaftPeer(RaftPeerId.getRaftPeerId("scm1"), conf.get("scm1")));
-    raftPeers.add(new RaftPeer(RaftPeerId.getRaftPeerId("scm2"), conf.get("scm2")));
-    raftPeers.add(new RaftPeer(RaftPeerId.getRaftPeerId("scm3"), conf.get("scm3")));
+    for (int i = 0; i < scmHosts.size(); ++i) {
+      String scmNodeId = "scm" + i;
+      RaftPeerId scmPeerId = RaftPeerId.getRaftPeerId(scmNodeId);
 
-    LOG.info("scm.node.id is {}, scm1 is {}, scm2 is {}, scm3 is {}",
-      scmNodeId, conf.get("scm1"), conf.get("scm2"), conf.get("scm3"));
+      String scmHost = scmHosts.get(i);
+      if (InetAddress.getByName(scmHost).equals(localHost)) {
+        selfIndex = i;
+        selfPeerId = scmPeerId;
+      }
 
-    final RaftProperties serverProperties = RatisUtil
-        .newRaftProperties(haConf, conf);
+      raftPeers.add(new RaftPeer(
+          scmPeerId, scmHost + ":" + address.getPort()));
+    }
+
+    if (selfIndex == -1) {
+      String errorMessage = "localhost " +  localHost
+          + " does not exist in ozone.scm.names "
+          + conf.get(ScmConfigKeys.OZONE_SCM_NAMES);
+      throw new IOException(errorMessage);
+    }
+
+    LOG.info("SCMRatisServer started, " +
+        "localHost: {}, OZONE_SCM_NAMES: {}, selfIndex: {}",
+        localHost, conf.get(ScmConfigKeys.OZONE_SCM_NAMES), selfIndex);
+
+    this.raftPeerId = selfPeerId;
+
+    final String scmServiceId = "SCM-HA-Service";
     this.raftGroupId = RaftGroupId.valueOf(
         UUID.nameUUIDFromBytes(scmServiceId.getBytes(StandardCharsets.UTF_8)));
     this.raftGroup = RaftGroup.valueOf(raftGroupId, raftPeers);
+
+    final RaftProperties serverProperties = RatisUtil
+        .newRaftProperties(haConf, conf);
     this.scmStateMachine = new SCMStateMachine();
     this.server = RaftServer.newBuilder()
         .setServerId(raftPeerId)

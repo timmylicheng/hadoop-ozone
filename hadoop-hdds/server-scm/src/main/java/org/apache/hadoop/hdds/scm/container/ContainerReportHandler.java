@@ -33,6 +33,7 @@ import org.apache.hadoop.hdds.scm.server.SCMDatanodeHeartbeatDispatcher
     .ContainerReportFromDatanode;
 import org.apache.hadoop.hdds.server.events.EventHandler;
 import org.apache.hadoop.hdds.server.events.EventPublisher;
+import org.apache.hadoop.ozone.common.statemachine.InvalidStateTransitionException;
 import org.apache.hadoop.ozone.protocol.commands.CommandForDatanode;
 import org.apache.hadoop.ozone.protocol.commands.DeleteContainerCommand;
 import org.slf4j.Logger;
@@ -54,7 +55,7 @@ public class ContainerReportHandler extends AbstractContainerReportHandler
       LoggerFactory.getLogger(ContainerReportHandler.class);
 
   private final NodeManager nodeManager;
-  private final ContainerManager containerManager;
+  private final ContainerManagerV2 containerManager;
   private final String unknownContainerHandleAction;
 
   /**
@@ -73,7 +74,7 @@ public class ContainerReportHandler extends AbstractContainerReportHandler
    * @param conf OzoneConfiguration instance
    */
   public ContainerReportHandler(final NodeManager nodeManager,
-                                final ContainerManager containerManager,
+                                final ContainerManagerV2 containerManager,
                                 OzoneConfiguration conf) {
     super(containerManager, LOG);
     this.nodeManager = nodeManager;
@@ -88,7 +89,7 @@ public class ContainerReportHandler extends AbstractContainerReportHandler
   }
 
   public ContainerReportHandler(final NodeManager nodeManager,
-      final ContainerManager containerManager) {
+      final ContainerManagerV2 containerManager) {
     this(nodeManager, containerManager, null);
   }
 
@@ -178,7 +179,7 @@ public class ContainerReportHandler extends AbstractContainerReportHandler
           LOG.info("Sending delete container command for unknown container {}"
               + " to datanode {}", containerId.getId(), datanodeDetails);
         }
-      } catch (IOException e) {
+      } catch (IOException | InvalidStateTransitionException e) {
         LOG.error("Exception while processing container report for container" +
                 " {} from datanode {}.", replicaProto.getContainerID(),
             datanodeDetails, e);

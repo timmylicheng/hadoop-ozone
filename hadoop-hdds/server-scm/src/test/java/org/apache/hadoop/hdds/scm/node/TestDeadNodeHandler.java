@@ -42,7 +42,7 @@ import org.apache.hadoop.hdds.protocol.proto
     .StorageContainerDatanodeProtocolProtos.StorageReportProto;
 import org.apache.hadoop.hdds.scm.TestUtils;
 import org.apache.hadoop.hdds.scm.container.ContainerID;
-import org.apache.hadoop.hdds.scm.container.ContainerManager;
+import org.apache.hadoop.hdds.scm.container.ContainerManagerV2;
 import org.apache.hadoop.hdds.scm.container.ContainerNotFoundException;
 import org.apache.hadoop.hdds.scm.container.ContainerReplica;
 import org.apache.hadoop.hdds.scm.container.ContainerInfo;
@@ -75,7 +75,7 @@ public class TestDeadNodeHandler {
 
   private StorageContainerManager scm;
   private SCMNodeManager nodeManager;
-  private ContainerManager containerManager;
+  private ContainerManagerV2 containerManager;
   private NodeReportHandler nodeReportHandler;
   private PipelineManagerV2Impl pipelineManager;
   private DeadNodeHandler deadNodeHandler;
@@ -208,7 +208,7 @@ public class TestDeadNodeHandler {
         container3Replicas.iterator().next().getDatanodeDetails());
   }
 
-  private void registerReplicas(ContainerManager contManager,
+  private void registerReplicas(ContainerManagerV2 contManager,
       ContainerInfo container, DatanodeDetails... datanodes)
       throws ContainerNotFoundException {
     for (DatanodeDetails datanode : datanodes) {

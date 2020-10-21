@@ -262,7 +262,7 @@ public class SCMContainerLocationFailoverProxyProvider implements
       InetSocketAddress scmAddress) throws IOException {
     Configuration hadoopConf =
         LegacyHadoopConfigurationSource.asHadoopConfiguration(conf);
-    RPC.setProtocolEngine(hadoopConf, StorageContainerLocationProtocol.class,
+    RPC.setProtocolEngine(hadoopConf, StorageContainerLocationProtocolPB.class,
         ProtobufRpcEngine.class);
     return RPC.getProxy(
         StorageContainerLocationProtocolPB.class,

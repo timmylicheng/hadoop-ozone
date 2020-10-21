@@ -71,8 +71,6 @@ public class SCMContainerLocationFailoverProxyProvider implements
 
   private final String scmServiceId;
 
-  private String lastAttemptedLeader;
-
   private final int maxRetryCount;
   private final long retryInterval;
 

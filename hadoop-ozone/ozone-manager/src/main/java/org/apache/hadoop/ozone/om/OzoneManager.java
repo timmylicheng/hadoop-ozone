@@ -69,6 +69,7 @@ import org.apache.hadoop.hdds.scm.protocol.StorageContainerLocationProtocol;
 import org.apache.hadoop.hdds.scm.protocolPB.ScmBlockLocationProtocolClientSideTranslatorPB;
 import org.apache.hadoop.hdds.scm.protocolPB.ScmBlockLocationProtocolPB;
 import org.apache.hadoop.hdds.scm.protocolPB.StorageContainerLocationProtocolClientSideTranslatorPB;
+import org.apache.hadoop.hdds.scm.protocolPB.StorageContainerLocationProtocolPB;
 import org.apache.hadoop.hdds.scm.proxy.SCMBlockLocationFailoverProxyProvider;
 import org.apache.hadoop.hdds.scm.proxy.SCMContainerLocationFailoverProxyProvider;
 import org.apache.hadoop.hdds.security.x509.SecurityConfig;
@@ -821,6 +822,8 @@ public final class OzoneManager extends ServiceRuntimeInfoImpl
    */
   private static StorageContainerLocationProtocol getScmContainerClient(
       OzoneConfiguration conf) {
+    RPC.setProtocolEngine(conf, StorageContainerLocationProtocolPB.class,
+        ProtobufRpcEngine.class);
     SCMContainerLocationFailoverProxyProvider proxyProvider =
         new SCMContainerLocationFailoverProxyProvider(conf);
     StorageContainerLocationProtocol scmContainerClient =

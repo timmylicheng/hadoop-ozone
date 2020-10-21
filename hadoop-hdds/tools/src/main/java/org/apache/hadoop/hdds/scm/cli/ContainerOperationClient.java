@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.StorageUnit;
 import org.apache.hadoop.hdds.conf.ConfigurationSource;
 import org.apache.hadoop.hdds.conf.OzoneConfiguration;
@@ -38,10 +39,14 @@ import org.apache.hadoop.hdds.scm.container.common.helpers.ContainerWithPipeline
 import org.apache.hadoop.hdds.scm.pipeline.Pipeline;
 import org.apache.hadoop.hdds.scm.protocol.StorageContainerLocationProtocol;
 import org.apache.hadoop.hdds.scm.protocolPB.StorageContainerLocationProtocolClientSideTranslatorPB;
+import org.apache.hadoop.hdds.scm.protocolPB.StorageContainerLocationProtocolPB;
 import org.apache.hadoop.hdds.scm.proxy.SCMContainerLocationFailoverProxyProvider;
 import org.apache.hadoop.hdds.scm.storage.ContainerProtocolCalls;
 import org.apache.hadoop.hdds.security.x509.SecurityConfig;
 import org.apache.hadoop.hdds.tracing.TracingUtil;
+import org.apache.hadoop.hdds.utils.LegacyHadoopConfigurationSource;
+import org.apache.hadoop.ipc.ProtobufRpcEngine;
+import org.apache.hadoop.ipc.RPC;
 import org.apache.hadoop.ozone.OzoneSecurityUtil;
 
 import com.google.common.base.Preconditions;
@@ -108,8 +113,10 @@ public class ContainerOperationClient implements ScmClient {
   public static StorageContainerLocationProtocol newContainerRpcClient(
       ConfigurationSource configSource) {
     //TODO there may be issues with hadoop legacy config
-//    Configuration conf =
-//        LegacyHadoopConfigurationSource.asHadoopConfiguration(configSource);
+    Configuration conf =
+        LegacyHadoopConfigurationSource.asHadoopConfiguration(configSource);
+    RPC.setProtocolEngine(conf, StorageContainerLocationProtocolPB.class,
+        ProtobufRpcEngine.class);
 
     SCMContainerLocationFailoverProxyProvider proxyProvider =
         new SCMContainerLocationFailoverProxyProvider(configSource);

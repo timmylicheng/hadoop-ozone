@@ -24,7 +24,7 @@ import org.apache.hadoop.hdds.conf.OzoneConfiguration;
 import org.apache.hadoop.hdds.protocol.proto.HddsProtos;
 import org.apache.hadoop.hdds.scm.container.ContainerID;
 import org.apache.hadoop.hdds.scm.container.ContainerInfo;
-import org.apache.hadoop.hdds.scm.container.ContainerManager;
+import org.apache.hadoop.hdds.scm.container.ContainerManagerV2;
 import org.apache.hadoop.hdds.scm.server.StorageContainerManager;
 import org.apache.hadoop.metrics2.MetricsRecordBuilder;
 import org.apache.hadoop.ozone.MiniOzoneCluster;
@@ -81,7 +81,7 @@ public class TestSCMContainerManagerMetrics {
   @Test
   public void testContainerOpsMetrics() throws IOException {
     MetricsRecordBuilder metrics;
-    ContainerManager containerManager = scm.getContainerManager();
+    ContainerManagerV2 containerManager = scm.getContainerManager();
     metrics = getMetrics(SCMContainerManagerMetrics.class.getSimpleName());
     long numSuccessfulCreateContainers = getLongCounter(
         "NumSuccessfulCreateContainers", metrics);
@@ -134,7 +134,7 @@ public class TestSCMContainerManagerMetrics {
           metrics), 1);
     }
 
-    containerManager.listContainer(
+    containerManager.listContainers(
         ContainerID.valueOf(containerInfo.getContainerID()), 1);
     metrics = getMetrics(SCMContainerManagerMetrics.class.getSimpleName());
     Assert.assertEquals(getLongCounter("NumListContainerOps",

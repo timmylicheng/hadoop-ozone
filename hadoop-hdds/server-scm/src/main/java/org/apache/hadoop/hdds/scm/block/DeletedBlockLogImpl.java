@@ -38,7 +38,7 @@ import org.apache.hadoop.hdds.protocol.proto.StorageContainerDatanodeProtocolPro
 import org.apache.hadoop.hdds.scm.command.CommandStatusReportHandler.DeleteBlockStatus;
 import org.apache.hadoop.hdds.scm.container.ContainerID;
 import org.apache.hadoop.hdds.scm.container.ContainerInfo;
-import org.apache.hadoop.hdds.scm.container.ContainerManager;
+import org.apache.hadoop.hdds.scm.container.ContainerManagerV2;
 import org.apache.hadoop.hdds.scm.container.ContainerReplica;
 import org.apache.hadoop.hdds.scm.metadata.SCMMetadataStore;
 import org.apache.hadoop.hdds.server.events.EventHandler;
@@ -71,14 +71,14 @@ public class DeletedBlockLogImpl
       LoggerFactory.getLogger(DeletedBlockLogImpl.class);
 
   private final int maxRetry;
-  private final ContainerManager containerManager;
+  private final ContainerManagerV2 containerManager;
   private final SCMMetadataStore scmMetadataStore;
   private final Lock lock;
   // Maps txId to set of DNs which are successful in committing the transaction
   private Map<Long, Set<UUID>> transactionToDNsCommitMap;
 
   public DeletedBlockLogImpl(ConfigurationSource conf,
-                             ContainerManager containerManager,
+                             ContainerManagerV2 containerManager,
                              SCMMetadataStore scmMetadataStore) {
     maxRetry = conf.getInt(OZONE_SCM_BLOCK_DELETION_MAX_RETRY,
         OZONE_SCM_BLOCK_DELETION_MAX_RETRY_DEFAULT);
@@ -320,11 +320,11 @@ public class DeletedBlockLogImpl
   }
 
   @Override
-  public Map<Long, Long> getTransactions(
+  public Map<ContainerID, Long> getTransactions(
       DatanodeDeletedBlockTransactions transactions) throws IOException {
     lock.lock();
     try {
-      Map<Long, Long> deleteTransactionMap = new HashMap<>();
+      Map<ContainerID, Long> deleteTransactionMap = new HashMap<>();
       try (TableIterator<Long,
           ? extends Table.KeyValue<Long, DeletedBlocksTransaction>> iter =
                scmMetadataStore.getDeletedBlocksTXTable().iterator()) {
@@ -335,7 +335,8 @@ public class DeletedBlockLogImpl
           if (block.getCount() > -1 && block.getCount() <= maxRetry) {
             if (transactions.addTransaction(block,
                 transactionToDNsCommitMap.get(block.getTxID()))) {
-              deleteTransactionMap.put(block.getContainerID(),
+              deleteTransactionMap.put(
+                  ContainerID.valueOf(block.getContainerID()),
                   block.getTxID());
               transactionToDNsCommitMap
                   .putIfAbsent(block.getTxID(), new LinkedHashSet<>());

@@ -22,6 +22,7 @@ import org.apache.hadoop.hdds.protocol.proto
     .DeleteBlockTransactionResult;
 import org.apache.hadoop.hdds.protocol.proto
     .StorageContainerDatanodeProtocolProtos.DeletedBlocksTransaction;
+import org.apache.hadoop.hdds.scm.container.ContainerID;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -45,7 +46,8 @@ public interface DeletedBlockLog extends Closeable {
    * @return Mapping from containerId to latest transactionId for the container.
    * @throws IOException
    */
-  Map<Long, Long> getTransactions(DatanodeDeletedBlockTransactions transactions)
+  Map<ContainerID, Long> getTransactions(
+      DatanodeDeletedBlockTransactions transactions)
       throws IOException;
 
   /**

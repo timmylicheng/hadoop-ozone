@@ -49,6 +49,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableSet;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -633,13 +634,16 @@ public final class PipelineManagerV2Impl implements PipelineManager {
   }
 
   /**
-   * Check if scm is current leader.
-   * @throws NotLeaderException when it's not the current leader.
+   * return term of underlying RaftServer if role of SCM is leader.
+   * @throws NotLeaderException when it's not leader.
    */
-  private void checkLeader() throws NotLeaderException {
-    if (!scmhaManager.isLeader()) {
-      throw scmhaManager.triggerNotLeaderException();
-    }
+  private long checkLeader() throws NotLeaderException {
+//    Optional<Long> termOpt = scmhaManager.isLeader();
+//    if (!termOpt.isPresent()) {
+//      throw scmhaManager.triggerNotLeaderException();
+//    }
+//    return termOpt.get();
+    return 0;
   }
 
   private void setBackgroundPipelineCreator(

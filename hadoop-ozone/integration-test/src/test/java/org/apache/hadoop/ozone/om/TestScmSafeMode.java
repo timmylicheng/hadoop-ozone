@@ -130,7 +130,7 @@ public class TestScmSafeMode {
         new TestStorageContainerManagerHelper(cluster, conf);
     Map<String, OmKeyInfo> keyLocations = helper.createKeys(100, 4096);
     final List<ContainerInfo> containers = cluster
-        .getStorageContainerManager().getContainerManager().getContainers();
+        .getStorageContainerManager().getContainerManager().listContainers();
     GenericTestUtils.waitFor(() -> containers.size() >= 3, 100, 1000);
 
     String volumeName = "volume" + RandomStringUtils.randomNumeric(5);
@@ -230,7 +230,7 @@ public class TestScmSafeMode {
         new TestStorageContainerManagerHelper(cluster, conf);
     Map<String, OmKeyInfo> keyLocations = helper.createKeys(100 * 2, 4096);
     final List<ContainerInfo> containers = cluster
-        .getStorageContainerManager().getContainerManager().getContainers();
+        .getStorageContainerManager().getContainerManager().listContainers();
     GenericTestUtils.waitFor(() -> containers.size() >= 3, 100, 1000 * 30);
 
     // Removing some container to keep them open.
@@ -312,7 +312,7 @@ public class TestScmSafeMode {
         .getStorageContainerManager().getClientProtocolServer();
     assertFalse((scm.getClientProtocolServer()).getSafeModeStatus());
     final List<ContainerInfo> containers = scm.getContainerManager()
-        .getContainers();
+        .listContainers();
     scm.getEventQueue().fireEvent(SCMEvents.SAFE_MODE_STATUS,
         new SCMSafeModeManager.SafeModeStatus(true, true));
     GenericTestUtils.waitFor(() -> {

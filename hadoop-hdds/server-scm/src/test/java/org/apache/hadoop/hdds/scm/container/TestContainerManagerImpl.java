@@ -80,12 +80,11 @@ public class TestContainerManagerImpl {
   @Test
   public void testAllocateContainer() throws Exception {
     Assert.assertTrue(
-        containerManager.listContainers(null, Integer.MAX_VALUE).isEmpty());
+        containerManager.listContainers().isEmpty());
     final ContainerInfo container = containerManager.allocateContainer(
         HddsProtos.ReplicationType.RATIS,
         HddsProtos.ReplicationFactor.THREE, "admin");
-    Assert.assertEquals(1,
-        containerManager.listContainers(null, Integer.MAX_VALUE).size());
+    Assert.assertEquals(1, containerManager.listContainers().size());
     Assert.assertNotNull(containerManager.getContainer(
         container.containerID()));
   }

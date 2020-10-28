@@ -638,11 +638,12 @@ public final class PipelineManagerV2Impl implements PipelineManager {
    * @throws NotLeaderException when it's not leader.
    */
   private long checkLeader() throws NotLeaderException {
-    Optional<Long> termOpt = scmhaManager.isLeader();
-    if (!termOpt.isPresent()) {
-      throw scmhaManager.triggerNotLeaderException();
-    }
-    return termOpt.get();
+//    Optional<Long> termOpt = scmhaManager.isLeader();
+//    if (!termOpt.isPresent()) {
+//      throw scmhaManager.triggerNotLeaderException();
+//    }
+//    return termOpt.get();
+    return 0;
   }
 
   private void setBackgroundPipelineCreator(

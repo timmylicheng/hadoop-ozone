@@ -107,13 +107,14 @@ public final class ScmBlockLocationProtocolServerSideTranslatorPB
   public SCMBlockLocationResponse send(RpcController controller,
       SCMBlockLocationRequest request) throws ServiceException {
     if (!isLeader()) {
-      SCMBlockLocationResponse.Builder response = createSCMBlockResponse(
-          request.getCmdType(),
-          request.getTraceID());
-      response.setSuccess(false);
-      response.setStatus(Status.SCM_NOT_LEADER);
-      response.setLeaderSCMNodeId(null);
-      return response.build();
+//      SCMBlockLocationResponse.Builder response = createSCMBlockResponse(
+//          request.getCmdType(),
+//          request.getTraceID());
+//      response.setSuccess(false);
+//      response.setStatus(Status.SCM_NOT_LEADER);
+//      response.setLeaderSCMNodeId(null);
+//      return response.build();
+      throw new ServiceException(new IOException("SCM NOT LEADER"));
     }
     return dispatcher.processRequest(
         request,

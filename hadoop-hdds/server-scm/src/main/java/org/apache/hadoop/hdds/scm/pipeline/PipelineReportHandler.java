@@ -114,9 +114,14 @@ public class PipelineReportHandler implements
       }
       if (pipeline.isHealthy()) {
         pipelineManager.openPipeline(pipelineID);
-        if (pipelineAvailabilityCheck && scmSafeModeManager.getInSafeMode()) {
-          publisher.fireEvent(SCMEvents.OPEN_PIPELINE, pipeline);
-        }
+      }
+    }
+
+    // Give follower SCM chance to exit safe mode,
+    // since StateManager.updatePipelineState() is annotated with @Replicate.
+    if (pipeline.isHealthy()) {
+      if (pipelineAvailabilityCheck && scmSafeModeManager.getInSafeMode()) {
+        publisher.fireEvent(SCMEvents.OPEN_PIPELINE, pipeline);
       }
     }
   }
